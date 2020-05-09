@@ -1,4 +1,4 @@
-print("Task 4 say hello, assuming your local instance of mySQL is up and running.")
+print("Task 4 say hiddy-ho...assuming your local instance of mySQL is up and running.")
 
 import pandas as pd
 from sqlalchemy import create_engine

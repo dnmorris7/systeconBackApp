@@ -58,13 +58,13 @@ print(df3System.groupby('System').min())
 print("MAXIMUM REPAIR PER SYSTEM")
 print(df3System.groupby('System').max())
 print("AVERAGE REPAIR PER SYSTEM")
-print(df3System.groupby('System').mean())
+print(df3System.groupby(['System', 'Item']).mean())
 
 df3Item = df[['System','Item', 'Repair time']]
 print("MINIMUM REPAIR PER COMPONENT")
-print(df3Item.groupby('Item').min())
+print(df3Item.groupby(['Item', 'System']).min())
 print("MAXIMUM REPAIR PER COMPONENT")
-print(df3Item.groupby('Item').max())
+print(df3Item.groupby(['Item', 'System']).max())
 print("AVERAGE REPAIR PER COMPONENT")
 print(df3Item.groupby(['Item', 'System']).mean())
 
@@ -79,9 +79,11 @@ print("#Generate Interarrival times for all systems")
 
 #need to sort the calender first
 #dateData = df2['Failure observation']
-print(df2['Failure observation'].diff())
-print("Average failure is : ")
-print(df2['Failure observation'].diff().mean())
+#print(df2['Failure observation'].sort_values())
+print("## THE FAILURE INTERVAL IS : ")
+print(df2['Failure observation'].sort_values().diff())
+print("## AVERAGE FAILURE INTERVAL IS : ")
+print(df2['Failure observation'].sort_values().diff().mean())
 
 print("##Generate Interarrival times for each ###")
 df4=df2[['System', 'Item', 'Failure observation']]
@@ -98,9 +100,25 @@ print('Analysis: "Component 10 and 2 appear to be the lesser bottlenecks per sys
 import matplotlib.pyplot as plt
 
 
+##Do Components Grow Easier to Repair over time? Initial observations show little change?
+itemFailTimeline = df2[['Item', 'Failure observation', 'Repair time']].sort_values(by='Failure observation', ascending=True)
 
-itemFailTimeline = df2[['Item', 'Failure observation', 'Repair time']]
+print("=======Item Failure Timeline=====")
+print(itemFailTimeline)
+fig = plt.plot_date(itemFailTimeline['Failure observation'], itemFailTimeline['Repair time'], color='red')
+plt.ylabel("Hours to repair")
+plt.title("Failures - All Items")
+plt.show()
+
+item1FailTimeline = itemFailTimeline.query('Item =="Component 1"')
+print(item1FailTimeline)
+fig = plt.plot_date(item1FailTimeline['Failure observation'], item1FailTimeline['Repair time'], color='red')
+plt.ylabel("Hours to repair")
+plt.title("Item 1 Failures")
+plt.show()
+
 item4FailTimeline = itemFailTimeline.query('Item =="Component 4"')
+print(item4FailTimeline)
 fig = plt.plot_date(item4FailTimeline['Failure observation'], item4FailTimeline['Repair time'], color='red')
 plt.ylabel("Hours to repair")
 plt.title("Item 4 Failures")
@@ -108,8 +126,30 @@ plt.show()
 
 item10FailTimeline = itemFailTimeline.query('Item =="Component 10"')
 fig =plt.plot_date(item10FailTimeline['Failure observation'], item10FailTimeline['Repair time'], color='red')
-plt.label("Hours to repair")
+plt.ylabel("Hours to repair")
 plt.title("Item 10 Failures")
 print(item10FailTimeline)
 plt.show()
 #print(df4.groupby('System'))
+
+
+###What about Systems?
+systemFailTimeline = df2[['System', 'Failure observation', 'Repair time']].sort_values(by='Failure observation', ascending=True)
+
+print("=======System Failure Timeline=====")
+print(systemFailTimeline)
+fig = plt.plot_date(systemFailTimeline['Failure observation'], systemFailTimeline['Repair time'], color='red')
+plt.ylabel("Hours to repair")
+plt.title("Failures - All Systems")
+plt.show()
+
+
+####Let's do some clustering over the entire data set.
+from scipy import stats
+# ==LINEAR REGRESSION==
+#x=(itemFailTimeline['Failure observation'] - itemFailTimeline['Failure observation'].iat[0]).days.reshape(-1,1)
+x =itemFailTimeline['Failure observation'].factorize()[0].reshape(-1,1)
+y = itemFailTimeline['Repair time'].values
+stats.linregress(x,y)
+
+# Can we learn anything about these variances?
